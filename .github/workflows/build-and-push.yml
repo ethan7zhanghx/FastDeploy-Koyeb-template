@@ -1,0 +1,39 @@
+name: Build and push FastDeploy image to GHCR
+
+on:
+  workflow_dispatch:   # 手动触发
+  # 如果你想 push 到 main 时自动构建，可以同时加：
+  # push:
+  #   branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: fastdeploy-koyeb    # 镜像名你可以改，比如 fastdeploy-koyeb-template
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # 允许往 GHCR 推镜像
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.gpu
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
