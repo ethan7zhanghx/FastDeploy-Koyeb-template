@@ -5,7 +5,6 @@ RUN apt-get update -y \
 
 RUN ldconfig /usr/local/cuda-12.6/compat/
 
-# Install Python dependencies
 COPY builder/requirements.txt /requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
     python3 -m pip install --upgrade pip && \
@@ -29,12 +28,10 @@ ENV MODEL=baidu/ERNIE-4.5-0.3B-Paddle \
 ENV QUANTIZATION="" \
     GPU_MEMORY_UTILIZATION=""
 
-# Create entrypoint script using heredoc
 RUN cat > /entrypoint.sh <<'EOF'
 #!/bin/bash
 set -e
 
-# Use PORT from environment or default to 8000
 PORT=${PORT:-8000}
 
 CMD="python3 -m fastdeploy.entrypoints.openai.api_server --model ${MODEL} --max-model-len ${MAX_MODEL_LEN} --max-num-seqs ${MAX_NUM_SEQS} --host 0.0.0.0 --port ${PORT}"
