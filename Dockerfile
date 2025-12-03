@@ -29,25 +29,29 @@ ENV MODEL=baidu/ERNIE-4.5-0.3B-Paddle \
 ENV QUANTIZATION="" \
     GPU_MEMORY_UTILIZATION=""
 
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
+# Create entrypoint script using heredoc
+RUN cat > /entrypoint.sh <<'EOF'
+#!/bin/bash
+set -e
 
-PORT=${PORT:-8000}\n\
-\n\
-CMD="python3 -m fastdeploy.entrypoints.openai.api_server --model ${MODEL} --max-model-len ${MAX_MODEL_LEN} --max-num-seqs ${MAX_NUM_SEQS} --host 0.0.0.0 --port ${PORT}"\n\
-\n\
-if [ -n "${QUANTIZATION}" ]; then\n\
-  CMD="${CMD} --quantization ${QUANTIZATION}"\n\
-fi\n\
-\n\
-if [ -n "${GPU_MEMORY_UTILIZATION}" ]; then\n\
-  CMD="${CMD} --gpu-memory-utilization ${GPU_MEMORY_UTILIZATION}"\n\
-fi\n\
-\n\
-echo "Starting FastDeploy with command: ${CMD}"\n\
-exec ${CMD}\n\
-' > /entrypoint.sh && chmod +x /entrypoint.sh
+# Use PORT from environment or default to 8000
+PORT=${PORT:-8000}
+
+CMD="python3 -m fastdeploy.entrypoints.openai.api_server --model ${MODEL} --max-model-len ${MAX_MODEL_LEN} --max-num-seqs ${MAX_NUM_SEQS} --host 0.0.0.0 --port ${PORT}"
+
+if [ -n "${QUANTIZATION}" ]; then
+  CMD="${CMD} --quantization ${QUANTIZATION}"
+fi
+
+if [ -n "${GPU_MEMORY_UTILIZATION}" ]; then
+  CMD="${CMD} --gpu-memory-utilization ${GPU_MEMORY_UTILIZATION}"
+fi
+
+echo "Starting FastDeploy with command: ${CMD}"
+exec ${CMD}
+EOF
+
+RUN chmod +x /entrypoint.sh
 
 EXPOSE ${PORT}
 
